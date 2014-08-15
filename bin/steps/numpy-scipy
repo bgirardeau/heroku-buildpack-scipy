@@ -10,21 +10,24 @@
 # This script is invoked by [`bin/compile`](/).
 
 VENDORED_GIT_NAME="npscipy-binaries"
-VENDORED_GIT_REPO="git://github.com/thenovices/${VENDORED_GIT_NAME}.git"
+VENDORED_GIT_REPO="git://github.com/bgirardeau/${VENDORED_GIT_NAME}.git"
 # The location of the pre-compiled atlas/lapack/blas/gfortran binaries.
 VENDORED_BINARIES="npscipy"
 VENDORED_NUMPY_VERSION="1.8.1"
 VENDORED_NUMPY="numpy-1.8.1"
 VENDORED_SCIPY_VERSION="0.14.0"
 VENDORED_SCIPY="scipy-0.14.0"
+VENDORED_SCIKIT_LEARN_VERSION="0.15.1"
+VENDORED_SCIKIT_LEARN="scikit-learn-0.15.1"
+
 REQ_TXT=$(pwd)/requirements.txt
 
 # Syntax sugar.
 source $BIN_DIR/utils
 
-# If numpy or scipy exists within requirements.txt then use binaries.
-if (grep -iq -e "numpy" -e "scipy" $REQ_TXT) then
-  puts-step "Detected numpy/scipy in requirements.txt. Downloading prebuilt binaries."
+# If numpy, scipy, or scikit-learn exists within requirements.txt then use binaries.
+if (grep -iq -e "numpy" -e "scipy" -e "scikit-learn" $REQ_TXT) then
+  puts-step "Detected numpy/scipy/scikit-learn in requirements.txt. Downloading prebuilt binaries."
   cd .heroku
   git clone --quiet ${VENDORED_GIT_REPO}
 
@@ -78,6 +81,26 @@ if (grep -iq -e "numpy" -e "scipy" $REQ_TXT) then
         rm -rf python/lib/python2.7/site-packages/scipy*
         puts-step "Installing new SciPy ($VENDORED_SCIPY_VERSION) package."
         tar xzf ${VENDORED_GIT_NAME}/${VENDORED_SCIPY}.tar.gz
+      fi
+    fi
+  fi
+
+  if (grep -iq "scikit-learn" $REQ_TXT) then
+    SCIKIT_LEARN_VERSION=$(grep -i "scikit-learn" $REQ_TXT | cut -d'=' -f10)
+    if [ "$SCIKIT_LEARN_VERSION" != "$VENDORED_SCIKIT_LEARN_VERSION" ]; then
+      puts-step "scikit-learn $SCIKIT_LEARN_VERSION requested. This buildpack only supports scikit-learn $VENDORED_SCIKIT_LEARN_VERSION"
+    elif [ ! -d "python/lib/python2.7/site-packages/sklearn" ]; then
+      puts-step "Copying compiled scikit-learn $SCIKIT_LEARN_VERSION."
+      tar -xzf ${VENDORED_GIT_NAME}/${VENDORED_SCIKIT_LEARN}.tar.gz
+    else
+      INSTALLED_SCIKIT_LEARN_VERSION=$(find python/lib/python2.7/site-packages -name "sklearn-*" | cut -d'-' -f5)
+      if [ "$INSTALLED_SCIKIT_LEARN_VERSION" == "$VENDORED_SCIKIT_LEARN_VERSION" ]; then
+        puts-step "Existing scikit-learn ($INSTALLED_SCIKIT_LEARN_VERSION) package detected."
+      else
+        puts-step "Removing old scikit-learn ($INSTALLED_SCIKIT_LEARN_VERSION) package."
+        rm -rf python/lib/python2.7/site-packages/sklearn*
+        puts-step "Installing new scikit-learn ($VENDORED_SCIKIT_LEARN_VERSION) package."
+        tar xzf ${VENDORED_GIT_NAME}/${VENDORED_SCIKIT_LEARN}.tar.gz
       fi
     fi
   fi
