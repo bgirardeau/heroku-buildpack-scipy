@@ -25,9 +25,9 @@ REQ_TXT=$(pwd)/requirements.txt
 # Syntax sugar.
 source $BIN_DIR/utils
 
-# If numpy, scipy, or scikit-learn exists within requirements.txt then use binaries.
-if (grep -iq -e "numpy" -e "scipy" -e "scikit-learn" $REQ_TXT) then
-  puts-step "Detected numpy/scipy/scikit-learn in requirements.txt. Downloading prebuilt binaries."
+# If numpy, scipy, scikit-learn, or samplerate exists within requirements.txt then use binaries.
+if (grep -iq -e "numpy" -e "scipy" -e "scikit-learn" -e "scikits.samplerate" $REQ_TXT) then
+  puts-step "Detected numpy/scipy/scikit-learn/samplerate in requirements.txt. Downloading prebuilt binaries."
   cd .heroku
   git clone --quiet ${VENDORED_GIT_REPO}
 
@@ -39,6 +39,7 @@ if (grep -iq -e "numpy" -e "scipy" -e "scikit-learn" $REQ_TXT) then
     # Download and extract everything into target vendor directory.
     tar -xvf ${VENDORED_GIT_NAME}/${VENDORED_BINARIES}.tar.gz > /dev/null
   fi
+
   export BLAS=$(pwd)/vendor/lib/atlas-base/atlas/libblas.a
   export LAPACK=$(pwd)/vendor/lib/atlas-base/atlas/liblapack.a
   export ATLAS=$(pwd)/vendor/lib/atlas-base/libatlas.a
@@ -86,20 +87,20 @@ if (grep -iq -e "numpy" -e "scipy" -e "scikit-learn" $REQ_TXT) then
   fi
 
   if (grep -iq "scikit-learn" $REQ_TXT) then
-    SCIKIT_LEARN_VERSION=$(grep -i "scikit-learn" $REQ_TXT | cut -d'=' -f10)
+    SCIKIT_LEARN_VERSION=$(grep -i "scikit-learn" $REQ_TXT | cut -d'=' -f3)
     if [ "$SCIKIT_LEARN_VERSION" != "$VENDORED_SCIKIT_LEARN_VERSION" ]; then
       puts-step "scikit-learn $SCIKIT_LEARN_VERSION requested. This buildpack only supports scikit-learn $VENDORED_SCIKIT_LEARN_VERSION"
     elif [ ! -d "python/lib/python2.7/site-packages/sklearn" ]; then
       puts-step "Copying compiled scikit-learn $SCIKIT_LEARN_VERSION."
-      tar -xzf ${VENDORED_GIT_NAME}/${VENDORED_SCIKIT_LEARN}.tar.gz
+      tar xzf ${VENDORED_GIT_NAME}/${VENDORED_SCIKIT_LEARN}.tar.gz
     else
-      INSTALLED_SCIKIT_LEARN_VERSION=$(find python/lib/python2.7/site-packages -name "sklearn-*" | cut -d'-' -f5)
+      INSTALLED_SCIKIT_LEARN_VERSION=$(find python/lib/python2.7/site-packages -name "scikit_learn-*" | cut -d'-' -f3)
       if [ "$INSTALLED_SCIKIT_LEARN_VERSION" == "$VENDORED_SCIKIT_LEARN_VERSION" ]; then
         puts-step "Existing scikit-learn ($INSTALLED_SCIKIT_LEARN_VERSION) package detected."
       else
         puts-step "Removing old scikit-learn ($INSTALLED_SCIKIT_LEARN_VERSION) package."
         rm -rf python/lib/python2.7/site-packages/sklearn*
-        puts-step "Installing new scikit-learn ($VENDORED_SCIKIT_LEARN_VERSION) package."
+        puts-step "Copying new scikit-learn ($VENDORED_SCIKIT_LEARN_VERSION) package."
         tar xzf ${VENDORED_GIT_NAME}/${VENDORED_SCIKIT_LEARN}.tar.gz
       fi
     fi
@@ -109,6 +110,19 @@ if (grep -iq -e "numpy" -e "scipy" -e "scikit-learn" $REQ_TXT) then
   if [ -d "venv" ]; then
     cp -a venv/* python/
     rm -r venv
+  fi
+
+  if (grep -iq -e "scikits.samplerate" $REQ_TXT) then
+    if [ -d "vendor/lib/libsamplerate.so.0" ]; then
+      puts-step "Using cached libsamplerate..."
+    else
+      puts-step "Installing libsamplerate.."
+      tar -xvf ${VENDORED_GIT_NAME}/libsamplerate.tar.gz > /dev/null
+      # samplerate can't find libsamplerate unless we do this
+      cp vendor/lib/libsamplerate.so python/lib/libsamplerate.so
+      cp vendor/include/samplerate.h python/include/samplerate.h
+      pip install scikits.samplerate
+    fi
   fi
 
   if [ -d ${VENDORED_GIT_NAME} ]; then

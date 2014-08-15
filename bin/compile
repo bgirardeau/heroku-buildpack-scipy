@@ -157,9 +157,6 @@ source $BIN_DIR/steps/pylibmc
 # Numpy/scipy support
 source $BIN_DIR/steps/numpy-scipy
 
-# scikits.samplerate support
-source $BIN_DIR/steps/samplerate
-
 # Install Mercurial if it appears to be required.
 if (grep -Fiq "hg+" requirements.txt) then
   /app/.heroku/python/bin/pip install --use-mirrors mercurial | cleanup | indent
