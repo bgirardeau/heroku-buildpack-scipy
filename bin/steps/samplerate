@@ -29,6 +29,10 @@ if (grep -iq -e "^\s*scikits.samplerate" requirements.txt) then
     export LIBRARY_PATH=$(pwd)/vendor/lib:$(pwd)/lib/atlas-base:$(pwd)/lib/atlas-base/atlas
     export LD_LIBRARY_PATH=$(pwd)/vendor/lib:$(pwd)/vendor/lib/atlas-base:$(pwd)/vendor/lib/atlas-base/atlas
 
+    puts-step "Copying samplerate binaries to python/lib.."
+    cp vendor/lib/libsamplerate* python/lib
+    cp vendor/include/samplerate.h python/include
+
     puts-step "Installing scikits.samplerate$TARGET_SAMPLERATE_VERSION via pip"
     pip install --use-mirrors scikits.samplerate$TARGET_SAMPLERATE_VERSION
   fi
