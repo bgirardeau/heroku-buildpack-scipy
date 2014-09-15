@@ -1,5 +1,5 @@
-Heroku buildpack: Python, Numpy, and Scipy
-====================================================
+Heroku buildpack: Python, Numpy, Scipy, scikit-learn, and samplerate
+=====================================================================
 
 This is a [Heroku buildpack](http://devcenter.heroku.com/articles/buildpacks)
 for Python apps, powered by [pip](http://www.pip-installer.org/).
@@ -29,11 +29,11 @@ Usage
 -----
 For a new app:
 
-    heroku create --buildpack https://github.com/thenovices/heroku-buildpack-scipy
+    heroku create --buildpack https://github.com/bgirardeau/heroku-buildpack-scipy
 
 For an existing app:
 
-    heroku config:set BUILDPACK_URL=https://github.com/thenovices/heroku-buildpack-scipy
+    heroku config:set BUILDPACK_URL=https://github.com/bgirardeau/heroku-buildpack-scipy
 
 Demo
 ----
@@ -41,7 +41,7 @@ Demo
     $ mkdir testheroku
     $ cd testheroku
     $ git init
-    $ heroku create --buildpack https://github.com/thenovices/heroku-buildpack-scipy
+    $ heroku create --buildpack https://github.com/bgirardeau/heroku-builpack-scipy
     $ echo -e "numpy==1.8.1\nscipy==0.14.0" > requirements.txt
     $ git add requirements.txt
     $ git commit -m 'Added requirements'
